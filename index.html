@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Kreisleistungsprüfung</title>
+    <style>
+        :root {
+            --primary-color: #4285f4;
+            --correct-color: #34a853;
+            --wrong-color: #ea4335;
+            --text-color: #202124;
+            --light-gray: #f1f3f4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+            overscroll-behavior-y: contain;
+        }
+
+        body {
+            background-color: white;
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            max-width: 800px;
+            margin: 0 auto;
+            width: 100%;
+            overflow-x: hidden;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+            color: var(--primary-color);
+            font-size: clamp(1.5rem, 6vw, 2rem);
+        }
+
+        .name-container, .loading-container {
+            text-align: center;
+            margin: 20px 0;
+            padding: 15px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .name-input {
+            padding: 12px;
+            font-size: 1rem;
+            margin: 15px auto;
+            width: 100%;
+            max-width: 300px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+        }
+
+        .quiz-container {
+            display: none;
+            flex: 1;
+            width: 100%;
+        }
+
+        .progress-counter {
+            font-size: clamp(0.9rem, 3.5vw, 1rem);
+            margin-bottom: 15px;
+            color: #5f6368;
+            text-align: center;
+        }
+
+        .question-container {
+            margin-bottom: 15px;
+            padding: 15px;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            scroll-margin: 20px;
+        }
+
+        .question-text {
+            font-size: clamp(1rem, 4vw, 1.2rem);
+            margin-bottom: 15px;
+            font-weight: 500;
+        }
+
+        .options-container {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option {
+            padding: 12px 15px;
+            border: 1px solid #dadce0;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            font-size: clamp(0.9rem, 3.5vw, 1rem);
+        }
+
+        .option-label {
+            font-weight: bold;
+            margin-right: 10px;
+            min-width: 20px;
+        }
+
+        .option:hover {
+            background-color: var(--light-gray);
+        }
+
+        .option.selected {
+            border-color: var(--primary-color);
+            background-color: #e8f0fe;
+        }
+
+        .option.correct {
+            background-color: #e6f4ea;
+            border-color: var(--correct-color);
+        }
+
+        .option.wrong {
+            background-color: #fce8e6;
+            border-color: var(--wrong-color);
+        }
+
+        .navigation {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 10px 0;
+            position: sticky;
+            bottom: 0;
+            background: white;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+        }
+
+        button {
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: clamp(0.9rem, 3.5vw, 1rem);
+            transition: background-color 0.2s;
+            width: 100%;
+        }
+
+        #backToOverview {
+            display: none;
+            background-color: #f1f3f4;
+            color: var(--text-color);
+            grid-column: span 2;
+        }
+
+        button:hover {
+            background-color: #3367d6;
+        }
+
+        #backToOverview:hover {
+            background-color: #e0e0e0;
+        }
+
+        button:disabled {
+            background-color: #f1f3f4;
+            color: #bdc1c6;
+            cursor: not-allowed;
+        }
+
+        .results-container {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            flex: 1;
+        }
+
+        .score {
+            font-size: clamp(1.8rem, 8vw, 2.5rem);
+            margin: 20px 0;
+            color: var(--primary-color);
+        }
+
+        .question-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            justify-content: center;
+            margin: 25px 0;
+        }
+
+        .question-nav-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background-color: var(--light-gray);
+            cursor: pointer;
+            font-size: clamp(0.8rem, 3vw, 1rem);
+        }
+
+        .question-nav-btn.answered {
+            background-color: var(--primary-color);
+            color: white;
+        }
+
+        .question-nav-btn.correct {
+            background-color: var(--correct-color);
+            color: white;
+        }
+
+        .question-nav-btn.wrong {
+            background-color: var(--wrong-color);
+            color: white;
+        }
+
+        /* Desktop-spezifische Styles */
+        @media (min-width: 601px) {
+            .navigation {
+                display: flex;
+                justify-content: space-between;
+                position: relative;
+                box-shadow: none;
+                background: transparent;
+            }
+            
+            #backToOverview {
+                display: none;
+                width: auto;
+            }
+            
+            .quiz-completed #backToOverview {
+                display: block;
+            }
+        }
+
+        .result-status {
+            font-size: clamp(1.8rem, 8vw, 2.6rem);
+            font-weight: bold;
+            margin: 15px 0 5px;
+            padding: 12px 30px;
+            border-radius: 8px;
+            display: inline-block;
+        }
+
+        .result-status.bestanden {
+            background-color: #e6f4ea;
+            color: #1e7e34;
+            border: 2px solid #34a853;
+        }
+
+        .result-status.durchgefallen {
+            background-color: #fce8e6;
+            color: #c0392b;
+            border: 2px solid #ea4335;
+        }
+
+        .score {
+            font-size: clamp(1.2rem, 5vw, 1.6rem);
+            margin: 10px 0;
+            color: var(--text-color);
+        }
+
+        .score-detail {
+            font-size: clamp(0.95rem, 3.5vw, 1.1rem);
+            color: #5f6368;
+            margin-bottom: 10px;
+        }
+
+        #restartBtn {
+            background-color: var(--primary-color);
+            max-width: 280px;
+            margin: 20px auto 0;
+            display: block;
+        }
+
+        .mode-buttons {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin: 25px auto;
+            max-width: 340px;
+            width: 100%;
+        }
+
+        .mode-btn {
+            padding: 16px;
+            font-size: clamp(1rem, 4vw, 1.1rem);
+            font-weight: 600;
+            border-radius: 8px;
+        }
+
+        .mode-btn-karten {
+            background-color: var(--correct-color);
+        }
+
+        .mode-btn-karten:hover {
+            background-color: #2d8f47;
+        }
+
+        #nameInputSection {
+            display: none;
+        }
+
+        .karteikarten-container {
+            display: none;
+            flex: 1;
+            width: 100%;
+        }
+
+        .flashcard {
+            perspective: 1000px;
+            width: 100%;
+            min-height: 230px;
+            margin: 20px 0;
+            cursor: pointer;
+        }
+
+        .flashcard-inner {
+            position: relative;
+            width: 100%;
+            min-height: 230px;
+            transition: transform 0.5s;
+            transform-style: preserve-3d;
+        }
+
+        .flashcard.flipped .flashcard-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flashcard-front,
+        .flashcard-back {
+            position: absolute;
+            width: 100%;
+            min-height: 230px;
+            border-radius: 12px;
+            padding: 25px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+            font-size: clamp(1rem, 4vw, 1.15rem);
+        }
+
+        .flashcard-front {
+            background: #e8f0fe;
+            border: 2px solid var(--primary-color);
+            font-weight: 600;
+        }
+
+        .flashcard-back {
+            background: #e6f4ea;
+            border: 2px solid var(--correct-color);
+            transform: rotateY(180deg);
+        }
+
+        .flip-hint {
+            text-align: center;
+            color: #5f6368;
+            margin: -8px 0 15px;
+            font-size: clamp(0.85rem, 3vw, 0.95rem);
+        }
+
+        .flash-navigation {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .flash-navigation button {
+            flex: 1;
+        }
+
+        #flashMenuBtn {
+            background-color: #f1f3f4;
+            color: var(--text-color);
+        }
+
+        #flashMenuBtn:hover {
+            background-color: #e0e0e0;
+        }
+
+        /* Mobile-spezifische Optimierungen */
+        @media (max-width: 600px) {
+            .navigation {
+                padding: 10px;
+                margin-bottom: 5px;
+            }
+            
+            #nextBtn {
+                order: 1;
+            }
+            
+            #prevBtn {
+                order: 2;
+            }
+            
+            .quiz-completed #backToOverview {
+                display: block;
+                margin-top: 10px;
+            }
+            
+            .question-nav-btn {
+                width: 35px;
+                height: 35px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="app-container">
+        <h1>Kreisleistungsprüfung</h1>
+
+        <div class="name-container" id="nameContainer">
+            <h2 id="menuHeading">Was möchten Sie machen?</h2>
+            <div class="mode-buttons" id="modeButtons">
+                <button class="mode-btn" id="modeQuizBtn">Prüfung simulieren</button>
+                <button class="mode-btn mode-btn-karten" id="modeFlashBtn">Karteikarten lernen</button>
+            </div>
+            <div id="nameInputSection">
+                <input type="text" id="userName" class="name-input" placeholder="Ihr Name" required>
+                <button id="startQuizBtn">Prüfung starten</button>
+            </div>
+        </div>
+
+        <div class="loading-container" id="loadingContainer">
+            <p>Prüfung wird geladen...</p>
+        </div>
+
+        <div class="quiz-container" id="quizContainer">
+            <div class="progress-counter" id="progressCounter">Frage 1 von 30</div>
+            
+            <div class="question-container">
+                <div class="question-text" id="questionText"></div>
+                <div class="options-container" id="optionsContainer"></div>
+            </div>
+
+ <div class="navigation">
+            <div class="nav-group">
+                <button id="prevBtn" disabled>Zurück</button>
+                <button id="backToOverview">Zurück zur Übersicht</button>
+            </div>
+            <div class="nav-group">
+                <button id="nextBtn">Weiter</button>
+            </div>
+        </div>
+    </div>
+
+        <div class="karteikarten-container" id="karteikartenContainer">
+            <div class="progress-counter" id="flashProgressCounter">Karte 1 von 1</div>
+            <div class="flashcard" id="flashcard">
+                <div class="flashcard-inner">
+                    <div class="flashcard-front" id="flashcardFront"></div>
+                    <div class="flashcard-back" id="flashcardBack"></div>
+                </div>
+            </div>
+            <p class="flip-hint">Karte antippen oder anklicken zum Umdrehen</p>
+            <div class="flash-navigation">
+                <button id="flashPrevBtn" disabled>Zurück</button>
+                <button id="flashNextBtn">Weiter</button>
+            </div>
+            <button id="flashMenuBtn">Zurück zum Hauptmenü</button>
+        </div>
+
+        <div class="results-container" id="resultsContainer">
+            <h2>Ergebnis</h2>
+            <div id="resultStatus" class="result-status"></div>
+            <div class="score" id="scoreDisplay"></div>
+            <div class="score-detail" id="scoreDetail"></div>
+            <p>Klicke auf eine Nummer unten, um die Antwort zu überprüfen</p>
+            
+            <div class="question-nav" id="questionNav"></div>
+            <button id="restartBtn">Neue Prüfung starten</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const nameContainer = document.getElementById('nameContainer');
+            const loadingContainer = document.getElementById('loadingContainer');
+            const quizContainer = document.getElementById('quizContainer');
+            const karteikartenContainer = document.getElementById('karteikartenContainer');
+            const resultsContainer = document.getElementById('resultsContainer');
+            const questionText = document.getElementById('questionText');
+            const optionsContainer = document.getElementById('optionsContainer');
+            const progressCounter = document.getElementById('progressCounter');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const backToOverviewBtn = document.getElementById('backToOverview');
+            const scoreDisplay = document.getElementById('scoreDisplay');
+            const scoreDetail = document.getElementById('scoreDetail');
+            const resultStatus = document.getElementById('resultStatus');
+            const questionNav = document.getElementById('questionNav');
+            const userNameInput = document.getElementById('userName');
+            const startQuizBtn = document.getElementById('startQuizBtn');
+            const modeQuizBtn = document.getElementById('modeQuizBtn');
+            const modeFlashBtn = document.getElementById('modeFlashBtn');
+            const modeButtons = document.getElementById('modeButtons');
+            const nameInputSection = document.getElementById('nameInputSection');
+            const menuHeading = document.getElementById('menuHeading');
+            const flashProgressCounter = document.getElementById('flashProgressCounter');
+            const flashcard = document.getElementById('flashcard');
+            const flashcardFront = document.getElementById('flashcardFront');
+            const flashcardBack = document.getElementById('flashcardBack');
+            const flashPrevBtn = document.getElementById('flashPrevBtn');
+            const flashNextBtn = document.getElementById('flashNextBtn');
+            const flashMenuBtn = document.getElementById('flashMenuBtn');
+
+            let questions = [];
+            let currentQuestionIndex = 0;
+            let selectedQuestions = [];
+            let userAnswers = [];
+            let quizCompleted = false;
+            let quizStarted = false;
+            let mode = '';
+            let flashcards = [];
+            let flashIndex = 0;
+
+            function normalizeKey(key) {
+                return String(key || '')
+                    .toLowerCase()
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            }
+
+            function getValueByPossibleKeys(item, possibleKeys) {
+                const entryList = Object.entries(item || {});
+
+                for (const key of possibleKeys) {
+                    if (item[key] !== undefined && item[key] !== null && String(item[key]).trim() !== '') {
+                        return item[key];
+                    }
+                }
+
+                const normalizedTargets = possibleKeys.map(normalizeKey);
+                for (const [actualKey, actualValue] of entryList) {
+                    if (normalizedTargets.includes(normalizeKey(actualKey)) && actualValue !== undefined && actualValue !== null && String(actualValue).trim() !== '') {
+                        return actualValue;
+                    }
+                }
+
+                return null;
+            }
+
+            function showMainMenu() {
+                mode = '';
+                quizStarted = false;
+                quizCompleted = false;
+                nameContainer.style.display = 'flex';
+                loadingContainer.style.display = 'none';
+                quizContainer.style.display = 'none';
+                karteikartenContainer.style.display = 'none';
+                resultsContainer.style.display = 'none';
+                modeButtons.style.display = 'flex';
+                nameInputSection.style.display = 'none';
+                menuHeading.textContent = 'Was möchten Sie machen?';
+                userNameInput.value = '';
+            }
+
+            modeQuizBtn.addEventListener('click', function() {
+                mode = 'quiz';
+                modeButtons.style.display = 'none';
+                nameInputSection.style.display = 'block';
+                menuHeading.textContent = 'Bitte geben Sie Ihren Namen ein';
+            });
+
+            modeFlashBtn.addEventListener('click', function() {
+                mode = 'flash';
+                nameContainer.style.display = 'none';
+                loadingContainer.style.display = 'block';
+                loadingContainer.innerHTML = '<p>Daten werden geladen...</p>';
+                loadQuizFile();
+            });
+
+            window.addEventListener('beforeunload', function(e) {
+                if (mode === 'quiz' && quizStarted && !quizCompleted) {
+                    e.preventDefault();
+                    e.returnValue = 'Das Quiz ist noch nicht abgeschlossen. Möchten Sie die Seite wirklich verlassen?';
+                    return e.returnValue;
+                }
+            });
+
+            // Mobile Touch-Events
+            let startY;
+            document.addEventListener('touchstart', function(e) {
+                startY = e.touches[0].clientY;
+            }, { passive: true });
+
+            document.addEventListener('touchmove', function(e) {
+                if (!quizStarted || quizCompleted) return;
+                
+                const y = e.touches[0].clientY;
+                if (y > startY && window.scrollY <= 0) {
+                    e.preventDefault();
+                }
+            }, { passive: false });
+
+            startQuizBtn.addEventListener('click', function() {
+                const userName = userNameInput.value.trim();
+                if (userName === '') {
+                    alert('Bitte geben Sie Ihren Namen ein');
+                    return;
+                }
+                
+                nameContainer.style.display = 'none';
+                loadingContainer.style.display = 'block';
+                loadingContainer.innerHTML = '<p>Prüfung wird geladen...</p>';
+                quizStarted = true;
+                loadQuizFile();
+            });
+
+            function loadQuizFile() {
+                const excelFileUrl = 'fragen.xlsx';
+                
+                fetch(excelFileUrl)
+                    .then(response => {
+                        if (!response.ok) throw new Error('Excel-Datei konnte nicht geladen werden');
+                        return response.arrayBuffer();
+                    })
+                    .then(data => {
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                        if (mode === 'flash') {
+                            processFlashcardData(jsonData);
+                        } else {
+                            processQuizData(jsonData);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Fehler:', error);
+                        loadingContainer.innerHTML = '<p>Fehler beim Laden. Bitte Datei überprüfen.</p>';
+                    });
+            }
+
+            function processQuizData(data) {
+                questions = data
+                    .map(item => {
+                        const questionTextValue = getValueByPossibleKeys(item, ['Frage', 'Question']);
+
+                        const optionA = getValueByPossibleKeys(item, ['Option a', 'Option A', 'A']);
+                        const optionB = getValueByPossibleKeys(item, ['Option b', 'Option B', 'B']);
+                        const optionC = getValueByPossibleKeys(item, ['Option c', 'Option C', 'C']);
+                        const optionD = getValueByPossibleKeys(item, ['Option d', 'Option D', 'D']);
+
+                        const options = [];
+                        if (optionA) options.push({ label: 'A', text: String(optionA).trim() });
+                        if (optionB) options.push({ label: 'B', text: String(optionB).trim() });
+                        if (optionC) options.push({ label: 'C', text: String(optionC).trim() });
+                        if (optionD) options.push({ label: 'D', text: String(optionD).trim() });
+
+                        const correctAnswerRaw = getValueByPossibleKeys(item, [
+                            'Richtige Antwort',
+                            'Richtige Antwort ',
+                            'RichtigeAntwort',
+                            'Antwort',
+                            'Correct Answer',
+                            'Correct'
+                        ]);
+
+                        const correctAnswer = String(correctAnswerRaw || '')
+                            .trim()
+                            .toUpperCase()
+                            .charAt(0);
+
+                        return {
+                            text: String(questionTextValue || '').trim(),
+                            options: options,
+                            correctAnswer: correctAnswer
+                        };
+                    })
+                    .filter(question => {
+                        const hasValidQuestion = question.text.length > 0;
+                        const hasValidOptions = question.options.length >= 2;
+                        const hasValidCorrectAnswer = ['A', 'B', 'C', 'D'].includes(question.correctAnswer);
+                        return hasValidQuestion && hasValidOptions && hasValidCorrectAnswer;
+                    });
+
+                if (questions.length === 0) {
+                    loadingContainer.innerHTML = '<p>Keine gueltigen Fragen gefunden. Bitte Spalten in fragen.xlsx pruefen.</p>';
+                    return;
+                }
+
+                const questionCount = Math.min(30, questions.length);
+                selectedQuestions = getRandomQuestions(questions, questionCount);
+                userAnswers = new Array(selectedQuestions.length).fill(null);
+                loadingContainer.style.display = 'none';
+                quizContainer.style.display = 'block';
+                showQuestion(currentQuestionIndex);
+            }
+
+            function processFlashcardData(data) {
+                flashcards = data
+                    .map(item => {
+                        const frage = String(getValueByPossibleKeys(item, ['Frage', 'Question']) || '').trim();
+                        const bemerkung = String(getValueByPossibleKeys(item, ['Bemerkung', 'Hinweis', 'Erläuterung', 'Erlaeuterung', 'Kommentar']) || '').trim();
+                        return { frage, bemerkung };
+                    })
+                    .filter(card => card.frage.length > 0);
+
+                if (flashcards.length === 0) {
+                    loadingContainer.innerHTML = '<p>Keine Fragen für Karteikarten gefunden.</p>';
+                    return;
+                }
+
+                flashIndex = 0;
+                loadingContainer.style.display = 'none';
+                karteikartenContainer.style.display = 'block';
+                showFlashcard(flashIndex);
+            }
+
+            function getRandomQuestions(allQuestions, count) {
+                const shuffled = [...allQuestions].sort(() => 0.5 - Math.random());
+                return shuffled.slice(0, count);
+            }
+
+            function showQuestion(index) {
+                if (index < 0 || index >= selectedQuestions.length) return;
+                currentQuestionIndex = index;
+                const question = selectedQuestions[index];
+
+                progressCounter.textContent = `Frage ${index + 1} von ${selectedQuestions.length}`;
+                questionText.textContent = question.text;
+
+                optionsContainer.innerHTML = '';
+                question.options.forEach((option, i) => {
+                    const optionElement = document.createElement('div');
+                    optionElement.className = 'option';
+                    
+                    if (userAnswers[index] === option.label) {
+                        optionElement.classList.add('selected');
+                    }
+                    if (quizCompleted) {
+                        if (option.label === question.correctAnswer) {
+                            optionElement.classList.add('correct');
+                        } else if (userAnswers[index] === option.label && userAnswers[index] !== question.correctAnswer) {
+                            optionElement.classList.add('wrong');
+                        }
+                    }
+
+                    const labelSpan = document.createElement('span');
+                    labelSpan.className = 'option-label';
+                    labelSpan.textContent = option.label + ')';
+                    
+                    const textSpan = document.createElement('span');
+                    textSpan.textContent = option.text;
+
+                    optionElement.appendChild(labelSpan);
+                    optionElement.appendChild(textSpan);
+                    
+                    if (!quizCompleted) {
+                        optionElement.addEventListener('click', () => selectOption(option.label));
+                    }
+                    
+                    optionsContainer.appendChild(optionElement);
+                });
+
+                prevBtn.disabled = index === 0;
+                nextBtn.textContent = index === selectedQuestions.length - 1 ? 'Prüfung abgeben' : 'Weiter';
+                nextBtn.disabled = userAnswers[index] === null && !quizCompleted;
+            }
+
+            function selectOption(optionLabel) {
+                if (quizCompleted) return;
+                userAnswers[currentQuestionIndex] = optionLabel;
+                showQuestion(currentQuestionIndex);
+                nextBtn.disabled = false;
+            }
+
+            function showFlashcard(index) {
+                if (index < 0 || index >= flashcards.length) return;
+                flashIndex = index;
+
+                const card = flashcards[index];
+                flashProgressCounter.textContent = `Karte ${index + 1} von ${flashcards.length}`;
+                flashcardFront.textContent = card.frage;
+                flashcardBack.textContent = card.bemerkung || '(keine Bemerkung hinterlegt)';
+                flashcard.classList.remove('flipped');
+
+                flashPrevBtn.disabled = index === 0;
+                flashNextBtn.disabled = index === flashcards.length - 1;
+            }
+
+            prevBtn.addEventListener('click', () => {
+                if (currentQuestionIndex > 0) showQuestion(currentQuestionIndex - 1);
+            });
+
+            nextBtn.addEventListener('click', () => {
+                if (currentQuestionIndex < selectedQuestions.length - 1) {
+                    showQuestion(currentQuestionIndex + 1);
+                } else {
+                    submitQuiz();
+                }
+            });
+
+            backToOverviewBtn.addEventListener('click', function() {
+                quizContainer.style.display = 'none';
+                resultsContainer.style.display = 'block';
+            });
+
+            flashcard.addEventListener('click', function() {
+                flashcard.classList.toggle('flipped');
+            });
+
+            flashPrevBtn.addEventListener('click', function() {
+                if (flashIndex > 0) showFlashcard(flashIndex - 1);
+            });
+
+            flashNextBtn.addEventListener('click', function() {
+                if (flashIndex < flashcards.length - 1) showFlashcard(flashIndex + 1);
+            });
+
+            flashMenuBtn.addEventListener('click', function() {
+                showMainMenu();
+            });
+
+            function submitQuiz() {
+                quizCompleted = true;
+                document.body.classList.add('quiz-completed');
+                quizContainer.style.display = 'none';
+                resultsContainer.style.display = 'block';
+
+                const correctAnswers = selectedQuestions.reduce((count, question, index) => {
+                    return count + (userAnswers[index] === question.correctAnswer ? 1 : 0);
+                }, 0);
+                const wrongAnswers = selectedQuestions.length - correctAnswers;
+                const bestanden = wrongAnswers <= 5;
+
+                resultStatus.textContent = bestanden ? '✅ BESTANDEN' : '❌ DURCHGEFALLEN';
+                resultStatus.className = 'result-status ' + (bestanden ? 'bestanden' : 'durchgefallen');
+                scoreDisplay.textContent = `${correctAnswers} von ${selectedQuestions.length} richtig`;
+                scoreDetail.textContent = `Fehler: ${wrongAnswers} (max. 5 erlaubt)`;
+
+                // Fragen-Navigation erstellen
+                questionNav.innerHTML = '';
+                selectedQuestions.forEach((question, index) => {
+                    const navBtn = document.createElement('div');
+                    navBtn.className = 'question-nav-btn';
+                    if (userAnswers[index] !== null) {
+                        navBtn.classList.add('answered');
+                        if (userAnswers[index] === question.correctAnswer) {
+                            navBtn.classList.add('correct');
+                        } else {
+                            navBtn.classList.add('wrong');
+                        }
+                    }
+                    navBtn.textContent = index + 1;
+                    navBtn.addEventListener('click', () => {
+                        currentQuestionIndex = index;
+                        quizContainer.style.display = 'block';
+                        resultsContainer.style.display = 'none';
+                        showQuestion(index);
+                    });
+                    questionNav.appendChild(navBtn);
+                });
+            }
+
+            document.getElementById('restartBtn').addEventListener('click', function() {
+                showMainMenu();
+            });
+
+            showMainMenu();
+        });
+    </script>
+</body>
+</html>
