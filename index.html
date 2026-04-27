@@ -535,6 +535,7 @@
             let mode = '';
             let flashcards = [];
             let flashIndex = 0;
+            const excelFileCandidates = ['fragen_KLP.xlsx', 'Fragen_KLP.xlsx', 'Fagen_KLP.xlsx', 'fragen.xlsx'];
 
             function normalizeKey(key) {
                 return String(key || '')
@@ -630,13 +631,25 @@
             });
 
             function loadQuizFile() {
-                const excelFileUrl = 'fragen.xlsx';
-                
-                fetch(excelFileUrl)
-                    .then(response => {
-                        if (!response.ok) throw new Error('Excel-Datei konnte nicht geladen werden');
-                        return response.arrayBuffer();
-                    })
+                function fetchFirstAvailableExcelFile(fileNames) {
+                    let lastError = null;
+
+                    return fileNames.reduce((promise, fileName) => {
+                        return promise.catch(() => {
+                            return fetch(fileName).then(response => {
+                                if (!response.ok) {
+                                    throw new Error(`Datei nicht gefunden: ${fileName}`);
+                                }
+                                return response.arrayBuffer();
+                            });
+                        });
+                    }, Promise.reject(new Error('Startwert'))).catch(error => {
+                        lastError = error;
+                        throw lastError;
+                    });
+                }
+
+                fetchFirstAvailableExcelFile(excelFileCandidates)
                     .then(data => {
                         const workbook = XLSX.read(data, { type: 'array' });
                         const firstSheetName = workbook.SheetNames[0];
@@ -650,7 +663,7 @@
                     })
                     .catch(error => {
                         console.error('Fehler:', error);
-                        loadingContainer.innerHTML = '<p>Fehler beim Laden. Bitte Datei überprüfen.</p>';
+                        loadingContainer.innerHTML = '<p>Fehler beim Laden der Fragen. Bitte prüfen, ob fragen_KLP.xlsx im gleichen Ordner liegt.</p>';
                     });
             }
 
@@ -698,7 +711,7 @@
                     });
 
                 if (questions.length === 0) {
-                    loadingContainer.innerHTML = '<p>Keine gueltigen Fragen gefunden. Bitte Spalten in fragen.xlsx pruefen.</p>';
+                    loadingContainer.innerHTML = '<p>Keine gueltigen Fragen gefunden. Bitte Spalten in fragen_KLP.xlsx pruefen.</p>';
                     return;
                 }
 
