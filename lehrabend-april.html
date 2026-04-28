@@ -330,6 +330,11 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const excelFileUrl = './Lehrabend_April.xlsx?v=20260428';
+            const catalogRowRanges = {
+                A: [2, 11],
+                B: [12, 21],
+                C: [22, 31]
+            };
             let allQuestions = [];
             let catalogMap = { A: [], B: [], C: [] };
 
@@ -448,70 +453,94 @@
                         const workbook = XLSX.read(data, { type: 'array' });
                         const firstSheetName = workbook.SheetNames[0];
                         const worksheet = workbook.Sheets[firstSheetName];
-                        const rows = XLSX.utils.sheet_to_json(worksheet);
+                        const rows = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
 
-                        allQuestions = rows
-                            .map(function(item, idx) {
-                                const questionTextValue = getValueByPossibleKeys(item, ['Frage', 'Question']);
-                                const optionA = getValueByPossibleKeys(item, ['Option a', 'Option A', 'A']);
-                                const optionB = getValueByPossibleKeys(item, ['Option b', 'Option B', 'B']);
-                                const optionC = getValueByPossibleKeys(item, ['Option c', 'Option C', 'C']);
-                                const optionD = getValueByPossibleKeys(item, ['Option d', 'Option D', 'D']);
-                                const correctAnswerRaw = getValueByPossibleKeys(item, [
-                                    'Richtige Antwort',
-                                    'Richtige Antwort ',
-                                    'RichtigeAntwort',
-                                    'Antwort',
-                                    'Correct Answer',
-                                    'Correct'
-                                ]);
+                        if (rows.length < 2) {
+                            throw new Error('Die Excel-Datei hat zu wenige Zeilen.');
+                        }
 
-                                const note = String(getValueByPossibleKeys(item, [
-                                    'Bemerkung',
-                                    'Hinweis',
-                                    'Erläuterung',
-                                    'Erlaeuterung',
-                                    'Kommentar'
-                                ]) || '').trim();
+                        const headerRow = (rows[0] || []).map(normalizeKey);
 
-                                const options = [
-                                    { label: 'A', text: sanitizeText(optionA) },
-                                    { label: 'B', text: sanitizeText(optionB) },
-                                    { label: 'C', text: sanitizeText(optionC) },
-                                    { label: 'D', text: sanitizeText(optionD) }
-                                ].filter(function(opt) {
-                                    return opt.text.length > 0;
-                                });
-
-                                const correctAnswer = resolveCorrectAnswer(correctAnswerRaw, options);
-
-                                return {
-                                    id: idx + 1,
-                                    question: String(questionTextValue || '').trim(),
-                                    options: options,
-                                    correctAnswer: correctAnswer,
-                                    note: note
-                                };
-                            })
-                            .filter(function(question) {
-                                return (
-                                    question.question.length > 0 &&
-                                    question.options.length >= 2 &&
-                                    question.options.some(function(opt) {
-                                        return opt.label === question.correctAnswer;
-                                    })
-                                );
+                        function findColumnIndex(possibleNames, fallbackIndex) {
+                            const normalizedNames = possibleNames.map(normalizeKey);
+                            const foundIndex = headerRow.findIndex(function(h) {
+                                return normalizedNames.includes(h);
                             });
+                            return foundIndex >= 0 ? foundIndex : fallbackIndex;
+                        }
+
+                        const colQuestion = findColumnIndex(['Frage', 'Question'], 0);
+                        const colA = findColumnIndex(['Option a', 'Option A', 'A'], 1);
+                        const colB = findColumnIndex(['Option b', 'Option B', 'B'], 2);
+                        const colC = findColumnIndex(['Option c', 'Option C', 'C'], 3);
+                        const colD = findColumnIndex(['Option d', 'Option D', 'D'], 4);
+                        const colCorrect = findColumnIndex([
+                            'Richtige Antwort',
+                            'Richtige Antwort ',
+                            'RichtigeAntwort',
+                            'Antwort',
+                            'Correct Answer',
+                            'Correct'
+                        ], 5);
+                        const colNote = findColumnIndex([
+                            'Bemerkung',
+                            'Hinweis',
+                            'Erläuterung',
+                            'Erlaeuterung',
+                            'Kommentar'
+                        ], 6);
+
+                        function parseQuestionFromSheetRow(sheetRowNumber) {
+                            const row = rows[sheetRowNumber - 1] || [];
+                            const questionTextValue = sanitizeText(row[colQuestion]);
+                            const options = [
+                                { label: 'A', text: sanitizeText(row[colA]) },
+                                { label: 'B', text: sanitizeText(row[colB]) },
+                                { label: 'C', text: sanitizeText(row[colC]) },
+                                { label: 'D', text: sanitizeText(row[colD]) }
+                            ].filter(function(opt) {
+                                return opt.text.length > 0;
+                            });
+                            const correctAnswerRaw = row[colCorrect];
+                            const correctAnswer = resolveCorrectAnswer(correctAnswerRaw, options);
+                            const note = sanitizeText(row[colNote]);
+
+                            const isValid = (
+                                questionTextValue.length > 0 &&
+                                options.length >= 2 &&
+                                options.some(function(opt) { return opt.label === correctAnswer; })
+                            );
+
+                            if (!isValid) {
+                                return null;
+                            }
+
+                            return {
+                                id: sheetRowNumber,
+                                question: questionTextValue,
+                                options: options,
+                                correctAnswer: correctAnswer,
+                                note: note
+                            };
+                        }
+
+                        catalogMap = { A: [], B: [], C: [] };
+
+                        Object.keys(catalogRowRanges).forEach(function(key) {
+                            const range = catalogRowRanges[key];
+                            for (let sheetRow = range[0]; sheetRow <= range[1]; sheetRow += 1) {
+                                const parsedQuestion = parseQuestionFromSheetRow(sheetRow);
+                                if (parsedQuestion) {
+                                    catalogMap[key].push(parsedQuestion);
+                                }
+                            }
+                        });
+
+                        allQuestions = [].concat(catalogMap.A, catalogMap.B, catalogMap.C);
 
                         if (allQuestions.length === 0) {
                             throw new Error('Keine gueltigen Fragen in Lehrabend_April.xlsx gefunden.');
                         }
-
-                        catalogMap = {
-                            A: allQuestions.slice(0, 10),
-                            B: allQuestions.slice(10, 20),
-                            C: allQuestions.slice(20, 30)
-                        };
 
                         setCatalogHint('Tipp: Die Fragen sind fest hinterlegt und werden nicht zufaellig gemischt.');
 
