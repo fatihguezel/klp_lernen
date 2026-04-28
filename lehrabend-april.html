@@ -245,7 +245,7 @@
         .footer-links {
             margin-top: 16px;
             display: flex;
-            justify-content: space-between;
+            justify-content: flex-end;
             gap: 8px;
             flex-wrap: wrap;
         }
@@ -284,7 +284,6 @@
             </div>
             <div class="hint">Tipp: Die Fragen sind fest hinterlegt und werden nicht zufällig gemischt.</div>
             <div class="footer-links">
-                <button id="openFlashcardsBtn" class="btn-soft">Karteikarten April</button>
                 <a class="back-link" href="./index.html">Zurück zur Hauptseite</a>
             </div>
         </section>
@@ -356,7 +355,6 @@
             const flashPrevBtn = document.getElementById('flashPrevBtn');
             const flashNextBtn = document.getElementById('flashNextBtn');
             const flashMenuBtn = document.getElementById('flashMenuBtn');
-            const openFlashcardsBtn = document.getElementById('openFlashcardsBtn');
 
             let currentCatalogKey = null;
             let currentQuestions = [];
@@ -625,10 +623,6 @@
                 } else {
                     showCatalogMenu();
                 }
-            });
-
-            openFlashcardsBtn.addEventListener('click', function() {
-                openFlashcards(0);
             });
 
             flashcard.addEventListener('click', function() {
