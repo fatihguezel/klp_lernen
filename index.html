@@ -314,6 +314,32 @@
             background-color: #2d8f47;
         }
 
+        .mode-btn-lehrabend {
+            background-color: #f29900;
+        }
+
+        .mode-btn-lehrabend:hover {
+            background-color: #d88400;
+        }
+
+        .utility-links {
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .hidden-home-link {
+            font-size: 0.72rem;
+            opacity: 0.18;
+            color: #5f6368;
+            text-decoration: none;
+            transition: opacity 0.2s;
+        }
+
+        .hidden-home-link:hover,
+        .hidden-home-link:focus {
+            opacity: 0.75;
+        }
+
         #nameInputSection {
             display: none;
         }
@@ -457,6 +483,10 @@
             <div class="mode-buttons" id="modeButtons">
                 <button class="mode-btn" id="modeQuizBtn">Prüfung simulieren</button>
                 <button class="mode-btn mode-btn-karten" id="modeFlashBtn">Karteikarten lernen</button>
+                <button class="mode-btn mode-btn-lehrabend" id="modeAprilBtn">Lehrabend April</button>
+            </div>
+            <div class="utility-links">
+                <a class="hidden-home-link" href="./lehrabend-april.html?view=flashcards" aria-label="Lehrabend April Karteikarten">Karteikarten April</a>
             </div>
             <div id="nameInputSection">
                 <input type="text" id="userName" class="name-input" placeholder="Ihr Name" required>
@@ -537,6 +567,7 @@
             const startQuizBtn = document.getElementById('startQuizBtn');
             const modeQuizBtn = document.getElementById('modeQuizBtn');
             const modeFlashBtn = document.getElementById('modeFlashBtn');
+            const modeAprilBtn = document.getElementById('modeAprilBtn');
             const modeButtons = document.getElementById('modeButtons');
             const nameInputSection = document.getElementById('nameInputSection');
             const menuHeading = document.getElementById('menuHeading');
@@ -613,6 +644,10 @@
                 loadingContainer.style.display = 'block';
                 loadingContainer.innerHTML = '<p>Daten werden geladen...</p>';
                 loadQuizFile();
+            });
+
+            modeAprilBtn.addEventListener('click', function() {
+                window.location.href = './lehrabend-april.html';
             });
 
             window.addEventListener('beforeunload', function(e) {

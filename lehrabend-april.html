@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Lehrabend April</title>
+    <style>
+        :root {
+            --primary-color: #0f766e;
+            --secondary-color: #0ea5e9;
+            --accent-color: #f59e0b;
+            --ok-color: #16a34a;
+            --warn-color: #dc2626;
+            --text-color: #1f2937;
+            --soft-bg: #f3f4f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        html, body {
+            height: 100%;
+        }
+
+        body {
+            background: linear-gradient(145deg, #f0fdfa 0%, #ecfeff 45%, #fff7ed 100%);
+            color: var(--text-color);
+            min-height: 100vh;
+            padding: 12px;
+        }
+
+        .app {
+            max-width: 880px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.92);
+            border: 1px solid #d1d5db;
+            border-radius: 14px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+            overflow: hidden;
+        }
+
+        .header {
+            padding: 22px 18px 12px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: center;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            font-size: clamp(1.4rem, 5vw, 2rem);
+            margin-bottom: 8px;
+        }
+
+        .subtitle {
+            color: #4b5563;
+            font-size: 0.95rem;
+        }
+
+        .screen {
+            display: none;
+            padding: 18px;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        .catalog-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 12px;
+            margin-top: 16px;
+        }
+
+        .catalog-btn,
+        button {
+            border: 0;
+            border-radius: 10px;
+            padding: 12px 14px;
+            font-size: 0.98rem;
+            cursor: pointer;
+        }
+
+        .catalog-btn {
+            text-align: left;
+            background: #e6fffb;
+            border: 1px solid #99f6e4;
+            color: #115e59;
+            transition: transform 0.16s, box-shadow 0.16s;
+        }
+
+        .catalog-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 5px 14px rgba(15, 118, 110, 0.15);
+        }
+
+        .catalog-btn small {
+            display: block;
+            margin-top: 6px;
+            color: #0f766e;
+            opacity: 0.86;
+        }
+
+        .hint {
+            margin-top: 14px;
+            font-size: 0.88rem;
+            color: #6b7280;
+        }
+
+        .question-wrap {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px;
+            background: #ffffff;
+        }
+
+        .progress {
+            color: #4b5563;
+            font-size: 0.9rem;
+            margin-bottom: 10px;
+        }
+
+        .question {
+            font-size: 1.04rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .options {
+            display: grid;
+            gap: 8px;
+        }
+
+        .option {
+            border: 1px solid #d1d5db;
+            border-radius: 8px;
+            padding: 10px;
+            background: #fff;
+            text-align: left;
+            width: 100%;
+        }
+
+        .option:hover {
+            background: var(--soft-bg);
+        }
+
+        .option.selected {
+            border-color: var(--secondary-color);
+            background: #e0f2fe;
+        }
+
+        .option.correct {
+            border-color: var(--ok-color);
+            background: #dcfce7;
+        }
+
+        .option.wrong {
+            border-color: var(--warn-color);
+            background: #fee2e2;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .row-3 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .btn-main {
+            background: var(--primary-color);
+            color: #fff;
+        }
+
+        .btn-main:hover {
+            background: #0d5e57;
+        }
+
+        .btn-soft {
+            background: #f3f4f6;
+            color: #1f2937;
+        }
+
+        .btn-soft:hover {
+            background: #e5e7eb;
+        }
+
+        .btn-accent {
+            background: var(--accent-color);
+            color: #fff;
+        }
+
+        .btn-accent:hover {
+            background: #d48806;
+        }
+
+        button:disabled {
+            opacity: 0.55;
+            cursor: not-allowed;
+        }
+
+        .result {
+            border: 1px solid #e5e7eb;
+            border-radius: 10px;
+            padding: 14px;
+            background: #fff;
+            text-align: center;
+        }
+
+        .result h2 {
+            margin-bottom: 8px;
+        }
+
+        .flashcard {
+            margin-top: 14px;
+            border: 2px solid #99f6e4;
+            border-radius: 12px;
+            min-height: 220px;
+            background: #fff;
+            padding: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            font-size: 1.03rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+
+        .flashcard.answer {
+            border-color: #86efac;
+            background: #f0fdf4;
+        }
+
+        .footer-links {
+            margin-top: 16px;
+            display: flex;
+            justify-content: space-between;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        a.back-link {
+            color: #0f766e;
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        @media (max-width: 640px) {
+            .row,
+            .row-3 {
+                grid-template-columns: 1fr;
+            }
+
+            .flashcard {
+                min-height: 260px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <div class="header">
+            <h1>Lehrabend April</h1>
+            <p class="subtitle">Feste Fragen in drei Katalogen, geeignet für Gruppenbearbeitung.</p>
+        </div>
+
+        <section class="screen active" id="catalogScreen">
+            <h2>Katalog wählen</h2>
+            <div class="catalog-grid">
+                <button class="catalog-btn" data-catalog="A">Katalog A<small>Fragen 1 bis 10</small></button>
+                <button class="catalog-btn" data-catalog="B">Katalog B<small>Fragen 11 bis 20</small></button>
+                <button class="catalog-btn" data-catalog="C">Katalog C<small>Fragen 21 bis 30</small></button>
+            </div>
+            <div class="hint">Tipp: Die Fragen sind fest hinterlegt und werden nicht zufällig gemischt.</div>
+            <div class="footer-links">
+                <button id="openFlashcardsBtn" class="btn-soft">Karteikarten April</button>
+                <a class="back-link" href="./index.html">Zurück zur Hauptseite</a>
+            </div>
+        </section>
+
+        <section class="screen" id="quizScreen">
+            <div class="question-wrap">
+                <div class="progress" id="progressLabel"></div>
+                <div class="question" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+            </div>
+            <div class="row-3">
+                <button id="prevBtn" class="btn-soft">Zurück</button>
+                <button id="overviewBtn" class="btn-soft">Kataloge</button>
+                <button id="nextBtn" class="btn-main">Weiter</button>
+            </div>
+        </section>
+
+        <section class="screen" id="resultScreen">
+            <div class="result">
+                <h2>Auswertung</h2>
+                <p id="resultText"></p>
+                <p id="resultDetail"></p>
+            </div>
+            <div class="row">
+                <button id="retryBtn" class="btn-main">Katalog neu starten</button>
+                <button id="resultOverviewBtn" class="btn-soft">Kataloge</button>
+            </div>
+        </section>
+
+        <section class="screen" id="flashScreen">
+            <h2>Karteikarten April</h2>
+            <p class="progress" id="flashProgress"></p>
+            <div id="flashcard" class="flashcard"></div>
+            <div class="hint">Karte anklicken zum Umdrehen</div>
+            <div class="row-3">
+                <button id="flashPrevBtn" class="btn-soft">Zurück</button>
+                <button id="flashMenuBtn" class="btn-soft">Kataloge</button>
+                <button id="flashNextBtn" class="btn-accent">Weiter</button>
+            </div>
+        </section>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const excelFileUrl = './Lehrabend_April.xlsx?v=20260428';
+            let allQuestions = [];
+            let catalogMap = { A: [], B: [], C: [] };
+
+            const catalogScreen = document.getElementById('catalogScreen');
+            const quizScreen = document.getElementById('quizScreen');
+            const resultScreen = document.getElementById('resultScreen');
+            const flashScreen = document.getElementById('flashScreen');
+
+            const progressLabel = document.getElementById('progressLabel');
+            const questionText = document.getElementById('questionText');
+            const optionsContainer = document.getElementById('optionsContainer');
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const overviewBtn = document.getElementById('overviewBtn');
+
+            const resultText = document.getElementById('resultText');
+            const resultDetail = document.getElementById('resultDetail');
+            const retryBtn = document.getElementById('retryBtn');
+            const resultOverviewBtn = document.getElementById('resultOverviewBtn');
+
+            const flashProgress = document.getElementById('flashProgress');
+            const flashcard = document.getElementById('flashcard');
+            const flashPrevBtn = document.getElementById('flashPrevBtn');
+            const flashNextBtn = document.getElementById('flashNextBtn');
+            const flashMenuBtn = document.getElementById('flashMenuBtn');
+            const openFlashcardsBtn = document.getElementById('openFlashcardsBtn');
+
+            let currentCatalogKey = null;
+            let currentQuestions = [];
+            let currentIndex = 0;
+            let answers = [];
+
+            let flashIndex = 0;
+            let flashShowAnswer = false;
+            let pendingInitialView = null;
+
+            function normalizeKey(key) {
+                return String(key || '')
+                    .toLowerCase()
+                    .replace(/\s+/g, ' ')
+                    .trim();
+            }
+
+            function getValueByPossibleKeys(item, possibleKeys) {
+                const entries = Object.entries(item || {});
+
+                for (const key of possibleKeys) {
+                    if (item[key] !== undefined && item[key] !== null && String(item[key]).trim() !== '') {
+                        return item[key];
+                    }
+                }
+
+                const normalizedTargets = possibleKeys.map(normalizeKey);
+                for (const [actualKey, actualValue] of entries) {
+                    if (normalizedTargets.includes(normalizeKey(actualKey)) && actualValue !== undefined && actualValue !== null && String(actualValue).trim() !== '') {
+                        return actualValue;
+                    }
+                }
+
+                return null;
+            }
+
+            function setCatalogHint(message) {
+                const hintEl = document.querySelector('#catalogScreen .hint');
+                if (hintEl) {
+                    hintEl.textContent = message;
+                }
+            }
+
+            function loadAprilQuestions() {
+                setCatalogHint('Fragen werden aus Lehrabend_April.xlsx geladen...');
+
+                fetch(excelFileUrl, { cache: 'no-store' })
+                    .then(function(response) {
+                        if (!response.ok) {
+                            throw new Error('Excel-Datei konnte nicht geladen werden (' + response.status + ')');
+                        }
+                        return response.arrayBuffer();
+                    })
+                    .then(function(data) {
+                        const workbook = XLSX.read(data, { type: 'array' });
+                        const firstSheetName = workbook.SheetNames[0];
+                        const worksheet = workbook.Sheets[firstSheetName];
+                        const rows = XLSX.utils.sheet_to_json(worksheet);
+
+                        allQuestions = rows
+                            .map(function(item, idx) {
+                                const questionTextValue = getValueByPossibleKeys(item, ['Frage', 'Question']);
+                                const optionA = getValueByPossibleKeys(item, ['Option a', 'Option A', 'A']);
+                                const optionB = getValueByPossibleKeys(item, ['Option b', 'Option B', 'B']);
+                                const optionC = getValueByPossibleKeys(item, ['Option c', 'Option C', 'C']);
+                                const optionD = getValueByPossibleKeys(item, ['Option d', 'Option D', 'D']);
+                                const correctAnswerRaw = getValueByPossibleKeys(item, [
+                                    'Richtige Antwort',
+                                    'Richtige Antwort ',
+                                    'RichtigeAntwort',
+                                    'Antwort',
+                                    'Correct Answer',
+                                    'Correct'
+                                ]);
+
+                                const note = String(getValueByPossibleKeys(item, [
+                                    'Bemerkung',
+                                    'Hinweis',
+                                    'Erläuterung',
+                                    'Erlaeuterung',
+                                    'Kommentar'
+                                ]) || '').trim();
+
+                                const correctAnswer = String(correctAnswerRaw || '')
+                                    .trim()
+                                    .toUpperCase()
+                                    .charAt(0);
+
+                                return {
+                                    id: idx + 1,
+                                    question: String(questionTextValue || '').trim(),
+                                    options: {
+                                        A: String(optionA || '').trim(),
+                                        B: String(optionB || '').trim(),
+                                        C: String(optionC || '').trim(),
+                                        D: String(optionD || '').trim()
+                                    },
+                                    correctAnswer: correctAnswer,
+                                    note: note
+                                };
+                            })
+                            .filter(function(question) {
+                                return (
+                                    question.question.length > 0 &&
+                                    question.options.A.length > 0 &&
+                                    question.options.B.length > 0 &&
+                                    question.options.C.length > 0 &&
+                                    question.options.D.length > 0 &&
+                                    ['A', 'B', 'C', 'D'].includes(question.correctAnswer)
+                                );
+                            });
+
+                        if (allQuestions.length === 0) {
+                            throw new Error('Keine gueltigen Fragen in Lehrabend_April.xlsx gefunden.');
+                        }
+
+                        catalogMap = {
+                            A: allQuestions.slice(0, 10),
+                            B: allQuestions.slice(10, 20),
+                            C: allQuestions.slice(20, 30)
+                        };
+
+                        setCatalogHint('Tipp: Die Fragen sind fest hinterlegt und werden nicht zufaellig gemischt.');
+
+                        if (pendingInitialView === 'flashcards') {
+                            openFlashcards(0);
+                            pendingInitialView = null;
+                        }
+                    })
+                    .catch(function(error) {
+                        console.error(error);
+                        setCatalogHint('Fehler beim Laden der Datei Lehrabend_April.xlsx. Bitte Dateiname und Spalten pruefen.');
+                    });
+            }
+
+            function showScreen(screenEl) {
+                [catalogScreen, quizScreen, resultScreen, flashScreen].forEach(function(screen) {
+                    screen.classList.remove('active');
+                });
+                screenEl.classList.add('active');
+            }
+
+            function startCatalog(key) {
+                currentCatalogKey = key;
+                currentQuestions = catalogMap[key] || [];
+
+                if (currentQuestions.length === 0) {
+                    alert('Dieser Katalog hat aktuell keine gueltigen Fragen in Lehrabend_April.xlsx.');
+                    return;
+                }
+
+                currentIndex = 0;
+                answers = new Array(currentQuestions.length).fill(null);
+                showScreen(quizScreen);
+                renderQuestion();
+            }
+
+            function renderQuestion() {
+                const q = currentQuestions[currentIndex];
+                if (!q) {
+                    showCatalogMenu();
+                    return;
+                }
+
+                progressLabel.textContent = 'Katalog ' + currentCatalogKey + ' - Frage ' + (currentIndex + 1) + ' von ' + currentQuestions.length;
+                questionText.textContent = q.question;
+                optionsContainer.innerHTML = '';
+
+                ['A', 'B', 'C', 'D'].forEach(function(letter) {
+                    const btn = document.createElement('button');
+                    btn.className = 'option';
+                    btn.type = 'button';
+                    btn.textContent = letter + ') ' + q.options[letter];
+                    if (answers[currentIndex] === letter) {
+                        btn.classList.add('selected');
+                    }
+
+                    btn.addEventListener('click', function() {
+                        answers[currentIndex] = letter;
+                        renderQuestion();
+                    });
+
+                    optionsContainer.appendChild(btn);
+                });
+
+                prevBtn.disabled = currentIndex === 0;
+                nextBtn.disabled = answers[currentIndex] === null;
+                nextBtn.textContent = currentIndex === currentQuestions.length - 1 ? 'Abgeben' : 'Weiter';
+            }
+
+            function submitCatalog() {
+                let correct = 0;
+                currentQuestions.forEach(function(q, i) {
+                    if (answers[i] === q.correctAnswer) correct += 1;
+                });
+
+                const wrong = currentQuestions.length - correct;
+                resultText.textContent = 'Richtig: ' + correct + ' von ' + currentQuestions.length;
+                resultDetail.textContent = 'Falsch: ' + wrong + ' in Katalog ' + currentCatalogKey;
+                showScreen(resultScreen);
+            }
+
+            function showCatalogMenu() {
+                showScreen(catalogScreen);
+            }
+
+            function openFlashcards(startAt) {
+                if (allQuestions.length === 0) {
+                    alert('Es sind noch keine gueltigen Fragen fuer Karteikarten geladen.');
+                    return;
+                }
+
+                flashIndex = typeof startAt === 'number' ? startAt : 0;
+                flashShowAnswer = false;
+                showScreen(flashScreen);
+                renderFlashcard();
+            }
+
+            function renderFlashcard() {
+                const card = allQuestions[flashIndex];
+                if (!card) return;
+
+                flashProgress.textContent = 'Karte ' + (flashIndex + 1) + ' von ' + allQuestions.length;
+                if (flashShowAnswer) {
+                    flashcard.classList.add('answer');
+                    flashcard.textContent = card.correctAnswer + ') ' + card.options[card.correctAnswer] + ' - ' + card.note;
+                } else {
+                    flashcard.classList.remove('answer');
+                    flashcard.textContent = card.question;
+                }
+
+                flashPrevBtn.disabled = flashIndex === 0;
+                flashNextBtn.disabled = flashIndex === allQuestions.length - 1;
+            }
+
+            document.querySelectorAll('.catalog-btn').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    startCatalog(btn.dataset.catalog);
+                });
+            });
+
+            prevBtn.addEventListener('click', function() {
+                if (currentIndex > 0) {
+                    currentIndex -= 1;
+                    renderQuestion();
+                }
+            });
+
+            nextBtn.addEventListener('click', function() {
+                if (answers[currentIndex] === null) return;
+
+                if (currentIndex < currentQuestions.length - 1) {
+                    currentIndex += 1;
+                    renderQuestion();
+                } else {
+                    submitCatalog();
+                }
+            });
+
+            overviewBtn.addEventListener('click', showCatalogMenu);
+            resultOverviewBtn.addEventListener('click', showCatalogMenu);
+
+            retryBtn.addEventListener('click', function() {
+                if (currentCatalogKey) {
+                    startCatalog(currentCatalogKey);
+                } else {
+                    showCatalogMenu();
+                }
+            });
+
+            openFlashcardsBtn.addEventListener('click', function() {
+                openFlashcards(0);
+            });
+
+            flashcard.addEventListener('click', function() {
+                flashShowAnswer = !flashShowAnswer;
+                renderFlashcard();
+            });
+
+            flashPrevBtn.addEventListener('click', function() {
+                if (flashIndex > 0) {
+                    flashIndex -= 1;
+                    flashShowAnswer = false;
+                    renderFlashcard();
+                }
+            });
+
+            flashNextBtn.addEventListener('click', function() {
+                if (flashIndex < allQuestions.length - 1) {
+                    flashIndex += 1;
+                    flashShowAnswer = false;
+                    renderFlashcard();
+                }
+            });
+
+            flashMenuBtn.addEventListener('click', showCatalogMenu);
+
+            const params = new URLSearchParams(window.location.search);
+            const view = params.get('view');
+
+            loadAprilQuestions();
+
+            if (view === 'flashcards') {
+                pendingInitialView = 'flashcards';
+            } else {
+                showCatalogMenu();
+            }
+        });
+    </script>
+</body>
+</html>
